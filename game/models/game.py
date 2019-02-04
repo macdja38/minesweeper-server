@@ -251,7 +251,5 @@ class Game(models.Model):
 
 @receiver(pre_save, sender=Game)
 def my_callback(sender, instance, *args, **kwargs):
-    print("The sender is")
-    print(sender)
     if instance.state == "":
         instance.state = serialize_game(generate_empty_game(instance.width, instance.height))

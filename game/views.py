@@ -44,7 +44,6 @@ class GameViewSet(viewsets.ModelViewSet):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def get_serializer_class(self):
-        print('Get Serializer Class called')
         serializer_class = self.serializer_class
 
         if self.request.method == 'PUT' or self.request.method == 'PATCH':
