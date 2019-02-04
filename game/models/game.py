@@ -58,6 +58,8 @@ def generate_game(width, height, density=0.15):
             if random.uniform(0, 1) < bombs_remaining / tiles_remaining:
                 bomb = True
             row.append(create_tile(True, False, bomb))
+            if bomb:
+                bombs_remaining -= 1
             tiles_remaining -= 1
         grid.append(row)
 
