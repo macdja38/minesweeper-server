@@ -23,10 +23,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-CORS_ORIGIN_ALLOW_ALL = True
+DEBUG = False
+CORS_ORIGIN_ALLOW_ALL = False
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', 'minesweeper.ryke.xyz']
 
 
 # Application definition
