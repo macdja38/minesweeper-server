@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  api:
+    restart: unless-stopped
+    build: .
+    env_file: .env
+    expose:
+    - "8000"
+    networks:
+    - web
+    - default
+    labels:
+    - "traefik.docker.network=web"
+    - "traefik.enable=true"
+    - "traefik.frontend.rule=Host:minesweeper.ryke.xyz;PathPrefix:/api/"
+    - "traefik.port=8000"
+    - "traefik.protocol=http"
+    - "traefik.frontend.entryPoints=http,https"
+
+networks:
+  web:
+    external: true

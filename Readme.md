@@ -5,6 +5,10 @@ It will bind to port 8000
 
 # Setup
 
+### Setup env
+
+Copy `.env.example` to `.env` and change the secret.
+
 ### Enter virtual env
 
 ##### Linux / macos
