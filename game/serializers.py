@@ -21,7 +21,7 @@ class GameSerializerWithoutStateOrDimensions(serializers.HyperlinkedModelSeriali
 class GameSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Game
-        fields = ('id', 'height', 'width', 'start_time', 'client_state', 'game_state', 'bombs')
+        fields = ('id', 'height', 'width', 'start_time', 'end_time', 'client_state', 'game_state', 'bombs')
     width = serializers.IntegerField(
         read_only=True,
         default=serializers.CreateOnlyDefault(8)

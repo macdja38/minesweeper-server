@@ -3,6 +3,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from game.models.helpers.bitwise_operations import is_hidden, is_flagged, is_bomb, set_hidden, set_flagged, set_bomb
 import math
 import random
+import datetime
 
 
 def extract_adjacent(tile):
@@ -115,6 +116,7 @@ class Game(models.Model):
     )
     game_state = models.CharField(max_length=1, choices=GAME_STATES, default='S')
     start_time = models.DateTimeField(auto_now_add=True, editable=False)
+    end_time = models.DateTimeField(null=True, editable=False)
     # 255 is the largest number a tile can have
     # comma separated values means 4 chars per tile.
     # (This could be cut down to 2 chars with hex, at the cost of complexity)
@@ -151,9 +153,11 @@ class Game(models.Model):
 
         if bomb:
             self.game_state = 'L'
+            self.end_time = datetime.datetime.utcnow()
         else:
             if count_hidden(grid) == self.bombs:
                 self.game_state = 'W'
+                self.end_time = datetime.datetime.utcnow()
 
     def flag(self, x, y):
         grid = deserialize_game(self.state, self.width, self.height)
