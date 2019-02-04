@@ -22,12 +22,22 @@ Copy `.env.example` to `.env` and change the secret.
 
 ### Setup Database
 
-python manage.py migrate --run-syncdb
+`python manage.py migrate --run-syncdb`
 
 ### Run Tests
 
-python manage.py test
+`python manage.py test`
 
 ### Start dev server
 
-python manage.py runserver
+`python manage.py runserver`
+
+# Docker
+
+### DB Initialization
+
+`docker-compose run api python manage.py migrate --run-syncdb`
+
+### Build and run
+
+`docker-compose up -d --build`
