@@ -84,6 +84,28 @@ def generate_game(width, height, density=0.15):
     return grid
 
 
+def propagate_unhide(grid, width, height):
+    modified = 0
+    for y in range(0, height):
+        for x in range(0, height):
+            tile = grid[y][x]
+            if not is_hidden(tile) and not is_bomb(tile) and extract_adjacent(tile) == 0:
+                for y_offset in range(-1, 2):
+                    y_probe = y + y_offset
+                    if 0 <= y_probe < height:
+                        for x_offset in range(-1, 2):
+                            x_probe = x + x_offset
+                            if 0 <= x_probe < width:
+                                tile_probe = grid[y_probe][x_probe]
+                                if is_hidden(tile_probe):
+                                    grid[y_probe][x_probe] = set_hidden(False, tile_probe)
+                                    modified += 1
+
+    if modified > 0:
+        return propagate_unhide(grid, width, height)
+    return grid
+
+
 def serialize_game(grid):
     return ','.join([str(item) for sublist in grid for item in sublist])
 
@@ -149,6 +171,7 @@ class Game(models.Model):
         if not hidden:
             raise ValueError('Cannot reveal a tile that is not hidden')
         grid[y][x] = set_hidden(False, tile)
+        grid = propagate_unhide(grid, self.width, self.height)
         self.state = serialize_game(grid)
 
         if bomb:
