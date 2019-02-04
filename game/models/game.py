@@ -1,9 +1,12 @@
-from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
-from game.models.helpers.bitwise_operations import is_hidden, is_flagged, is_bomb, set_hidden, set_flagged, set_bomb
 import math
 import random
 import datetime
+
+from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
+from game.models.helpers.bitwise_operations import is_hidden, is_flagged, is_bomb, set_hidden, set_flagged, set_bomb
+from django.db.models.signals import pre_save
+from django.dispatch import receiver
 
 
 def extract_adjacent(tile):
@@ -17,10 +20,7 @@ def set_adjacent(value, tile=0):
 
 
 def create_tile(hidden, flagged, bomb, number=0):
-    return set_hidden(hidden) + set_flagged(flagged) + set_bomb(bomb) + number
-
-
-# Create your models here.
+    return set_hidden(hidden) + set_flagged(flagged) + set_bomb(bomb) + (number & 0b1111)
 
 
 def mask_hidden_data(tile):
@@ -45,23 +45,26 @@ def count_hidden(grid):
     return count
 
 
-def generate_game(width, height, density=0.15):
-    grid = []
+def generate_game(grid, width, height, clicked_x, clicked_y, density=0.15):
     tiles_total = width * height
     tiles_remaining = tiles_total
-    bombs_remaining = math.floor(density * width * height)
+    bombs_remaining = math.floor(density * width * height) - 1
 
     # Place bombs on the grid
     for y in range(0, height):
         row = []
         for x in range(0, width):
-            bomb = False
-            if random.uniform(0, 1) < bombs_remaining / tiles_remaining:
-                bomb = True
-            row.append(create_tile(True, False, bomb))
-            if bomb:
-                bombs_remaining -= 1
-            tiles_remaining -= 1
+            tile = grid[y][x]
+            if not (y == clicked_y and x == clicked_x):
+                bomb = False
+                if random.uniform(0, 1) < bombs_remaining / tiles_remaining:
+                    bomb = True
+                grid[y][x] = create_tile(True, is_flagged(tile), bomb)
+                if bomb:
+                    bombs_remaining -= 1
+                tiles_remaining -= 1
+            else:
+                grid[y][x] = create_tile(True, False, False)
         grid.append(row)
 
     # Count bombs adjacent to each square
@@ -80,6 +83,19 @@ def generate_game(width, height, density=0.15):
                                 if is_bomb(grid[y_probe][x_probe]):
                                     count += 1
                 grid[y][x] = set_adjacent(count, tile)
+
+    return grid
+
+
+def generate_empty_game(width, height):
+    grid = []
+
+    # Place bombs on the grid
+    for y in range(0, height):
+        row = []
+        for x in range(0, width):
+            row.append(create_tile(True, False, False))
+        grid.append(row)
 
     return grid
 
@@ -125,25 +141,22 @@ def deserialize_game(string, width, height):
     return client_state
 
 
-def generate_serialized_game_with_defaults():
-    # making this a  lambda causes django's migrations to fail
-    return serialize_game(generate_game(8, 8, 0.15))
-
-
 class Game(models.Model):
     GAME_STATES = (
+        ('C', 'Created'),
         ('S', 'Started'),
         ('W', 'Won'),
         ('L', 'Lost'),
     )
-    game_state = models.CharField(max_length=1, choices=GAME_STATES, default='S')
-    start_time = models.DateTimeField(auto_now_add=True, editable=False)
+    game_state = models.CharField(max_length=1, editable=False, choices=GAME_STATES, default='C')
+    start_time = models.DateTimeField(null=True, editable=False)
     end_time = models.DateTimeField(null=True, editable=False)
     # 255 is the largest number a tile can have
     # comma separated values means 4 chars per tile.
     # (This could be cut down to 2 chars with hex, at the cost of complexity)
     # 32 is the max field size, 32 * 32 * 4 = 4096
-    state = models.CharField(default=generate_serialized_game_with_defaults,
+    state = models.CharField(default="",
+                             editable=False,
                              max_length=4096)
     height = models.IntegerField(default=8,
                                  validators=[
@@ -156,14 +169,14 @@ class Game(models.Model):
                                     MinValueValidator(8)
                                 ])
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return ["height", "category", "state", "start_time", "id"]
-        else:
-            return ["start_time", "state", "id"]
-
     def reveal(self, x, y):
         grid = deserialize_game(self.state, self.width, self.height)
+
+        if self.game_state == "C":
+            grid = generate_game(grid, self.width, self.height, x, y, 0.15)
+            self.start_time = datetime.datetime.utcnow()
+            self.game_state = "S"
+
         tile = grid[y][x]
         bomb = is_bomb(tile)
         hidden = is_hidden(tile)
@@ -234,3 +247,11 @@ class Game(models.Model):
             client_state.append(row)
 
         return client_state
+
+
+@receiver(pre_save, sender=Game)
+def my_callback(sender, instance, *args, **kwargs):
+    print("The sender is")
+    print(sender)
+    if instance.state == "":
+        instance.state = serialize_game(generate_empty_game(instance.width, instance.height))

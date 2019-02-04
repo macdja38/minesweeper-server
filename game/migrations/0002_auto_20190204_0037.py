@@ -6,6 +6,10 @@ import django.utils.timezone
 import game.models.game
 
 
+def generate_empty_default_game():
+    return game.models.game.generate_empty_game(8, 8)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -32,7 +36,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='game',
             name='state',
-            field=models.CharField(default=game.models.game.generate_serialized_game_with_defaults, max_length=4096),
+            field=models.CharField(default=generate_empty_default_game, max_length=4096),
         ),
         migrations.AddField(
             model_name='game',

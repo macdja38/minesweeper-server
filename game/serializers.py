@@ -4,21 +4,13 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.permissions import IsAdminUser, AllowAny
 
 
-class GameSerializerWithoutStateOrDimensions(serializers.HyperlinkedModelSerializer):
+class GameSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Game
-        fields = ()
-
-    def get_permissions(self):
-        if self.request.method == 'DELETE':
-            return [IsAdminUser()]
-        elif self.request.method == 'POST':
-            return [AllowAny()]
-        else:
-            return []
+        fields = ('id', 'height', 'width', 'start_time', 'end_time', 'client_state', 'game_state', 'bombs')
 
 
-class GameSerializer(serializers.HyperlinkedModelSerializer):
+class GameSerializerWithReadOnlyDimensions(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Game
         fields = ('id', 'height', 'width', 'start_time', 'end_time', 'client_state', 'game_state', 'bombs')
