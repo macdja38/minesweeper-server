@@ -1,4 +1,4 @@
-from game.models import Game
+from game.models.game import Game
 from rest_framework import serializers
 from django.core.validators import MaxValueValidator, MinValueValidator
 from rest_framework.permissions import IsAdminUser, AllowAny

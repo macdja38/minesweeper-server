@@ -1,45 +1,12 @@
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
-from functools import partial
+from game.models.helpers.bitwise_operations import is_hidden, is_flagged, is_bomb, set_hidden, set_flagged, set_bomb
 import math
 import random
 
 
-def is_set(bit, integer):
-    """
-    Checks if a specific bit is set in an integer
-    :param bit: index of bit to check, 0 for rightmost bit, as number goes higher checks one more bit further left
-    :param integer: integer to check the bit of
-    :return: bool that's true if the bit is 1
-    """
-    mask = 1 << bit
-    return integer & mask == mask
-
-
-is_hidden = partial(is_set, 7)
-
-
-def is_flagged(tile):
-    return is_hidden(tile) and is_set(6, tile)
-
-
-is_bomb = partial(is_set, 5)
-
-
 def extract_adjacent(tile):
     return tile & 0b1111
-
-
-def set_bit(bit, value, tile=0):
-    mask = 1 << bit
-    if value:
-        return mask | tile
-    return (~mask) & tile
-
-
-set_hidden = partial(set_bit, 7)
-set_flagged = partial(set_bit, 6)
-set_bomb = partial(set_bit, 5)
 
 
 def set_adjacent(value, tile=0):
@@ -82,7 +49,6 @@ def generate_game(width, height, density=0.15):
     tiles_total = width * height
     tiles_remaining = tiles_total
     bombs_remaining = math.floor(density * width * height)
-    random.uniform(0, 1)
 
     # Place bombs on the grid
     for y in range(0, height):
@@ -111,8 +77,6 @@ def generate_game(width, height, density=0.15):
                                 if is_bomb(grid[y_probe][x_probe]):
                                     count += 1
                 grid[y][x] = set_adjacent(count, tile)
-
-    print(grid)
 
     return grid
 
@@ -167,7 +131,6 @@ class Game(models.Model):
                                 ])
 
     def get_readonly_fields(self, request, obj=None):
-        print("Got a request", obj)
         if obj:
             return ["height", "category", "state", "start_time", "id"]
         else:
@@ -231,8 +194,6 @@ class Game(models.Model):
 
         width = self.width
         height = self.height
-
-        print(flat_tiles)
 
         client_state = []
 

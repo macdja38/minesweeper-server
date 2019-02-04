@@ -1,4 +1,4 @@
-from game.models import Game
+from game.models.game import Game
 from rest_framework import viewsets, status
 from game.serializers import GameSerializer, MoveSerializer
 from rest_framework.response import Response
