@@ -103,7 +103,7 @@ def generate_empty_game(width, height):
 def propagate_unhide(grid, width, height):
     modified = 0
     for y in range(0, height):
-        for x in range(0, height):
+        for x in range(0, width):
             tile = grid[y][x]
             if not is_hidden(tile) and not is_bomb(tile) and extract_adjacent(tile) == 0:
                 for y_offset in range(-1, 2):
