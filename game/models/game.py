@@ -239,11 +239,16 @@ class Game(models.Model):
 
         client_state = []
 
+        mask_hidden = not (self.game_state == 'W' or self.game_state == 'L')
+
         # x is horizontal, y is vertical, top left is 0, 0
         for y in range(0, height):
             row = []
             for x in range(0, width):
-                row.append(mask_hidden_data(flat_tiles.pop()))
+                if mask_hidden:
+                    row.append(mask_hidden_data(flat_tiles.pop()))
+                else:
+                    row.append(flat_tiles.pop())
             client_state.append(row)
 
         return client_state
